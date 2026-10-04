@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OVERNIGHT — what your bill does while you sleep</title>
+<meta name="description" content="A budget alert is not a cap. Watch a runaway agent, a leaked key or a forgotten GPU run through the night against AWS, Azure, Google Cloud and Vercel's real alert delays — and get a spend breaker that actually stops it.">
+<meta property="og:title" content="OVERNIGHT — what your bill does while you sleep">
+<meta property="og:description" content="Your $100 budget alert can cost thousands. Here is the clock, and the fix.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23111'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='%23ff3b2f' font-family='monospace'%3E$%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">OVERNIGHT</span><span class="tag">what your bill does while you sleep</span></div>
+  <a class="src" href="https://github.com/nickzsche21/overnight">source</a>
+</header>
+
+<main>
+  <section class="stage">
+    <p class="lede">A budget <strong>alert</strong> is not a <strong>cap</strong>. Between the moment you pass it and the moment someone stops the spending, the meter keeps running.</p>
+    <div class="meter-box">
+      <div class="meter-head"><span>FARE</span><span>CLOCK <b id="clock">--:--</b></span></div>
+      <div class="meter-row"><span class="cur">$</span><div id="meter" class="meter" aria-live="off">      0.00</div></div>
+      <button id="replay" class="replay">▶ play the night again</button>
+    </div>
+    <svg id="sky" viewBox="0 0 1000 260" role="img" aria-label="The night as a timeline: cost rising from when the runaway starts to when it is stopped, with the hours you are asleep shaded"></svg>
+    <div id="verdict" class="verdict" aria-live="polite"></div>
+  </section>
+
+  <section class="controls">
+    <div class="panel">
+      <h2><span>1</span> What runs away</h2>
+      <div id="scenarios" class="chips"></div>
+      <p id="story" class="story"></p>
+      <div id="params" class="fields"></div>
+      <p id="rate" class="rate"></p>
+    </div>
+    <div class="panel">
+      <h2><span>2</span> What is meant to stop it</h2>
+      <div id="guards" class="chips"></div>
+      <div id="quote" class="quote"></div>
+    </div>
+    <div class="panel">
+      <h2><span>3</span> Your night</h2>
+      <div id="night-fields" class="fields"></div>
+    </div>
+  </section>
+
+  <section class="compare-wrap">
+    <h2>The same night, every guardrail</h2>
+    <p class="note">Solid bar: the middle of each provider's documented delay. Faint band: soonest to latest. Tap one to replay the night with it.</p>
+    <div id="compare" class="compare"></div>
+    <p id="insight" class="insight"></p>
+  </section>
+
+  <section id="fix" class="fix">
+    <h2>Caps that actually stop</h2>
+    <div class="caps">
+      <article><h3>Vercel</h3><p>Set a spend amount <em>and</em> turn on <b>Pause Production Deployments</b>. It checks every few minutes, so expect a few minutes of overshoot, and it does not cover AI Gateway or v0 usage. <a href="https://vercel.com/docs/spend-management" target="_blank" rel="noopener">docs</a></p></article>
+      <article><h3>Anthropic &amp; OpenAI</h3><p>Set an organization or project <b>spend limit</b> near what you can afford to lose — not your monthly forecast. <a href="https://docs.anthropic.com/en/api/rate-limits" target="_blank" rel="noopener">Anthropic</a> · <a href="https://platform.openai.com/docs/guides/rate-limits" target="_blank" rel="noopener">OpenAI</a></p></article>
+      <article><h3>Google Cloud</h3><p>Ordinary budgets only alert. Look for <b>spend cap budgets</b> (preview) on services that support them. <a href="https://cloud.google.com/billing/docs/how-to/budgets" target="_blank" rel="noopener">docs</a></p></article>
+      <article><h3>AWS &amp; Azure</h3><p>No hard cap. You can wire alerts to automation that shuts things down, but it fires on the same delayed billing data — hours late by design. <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" target="_blank" rel="noopener">AWS</a> · <a href="https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/tutorial-acm-create-budgets" target="_blank" rel="noopener">Azure</a></p></article>
+    </div>
+
+    <h3 class="code-h">Or put the cap in your own code</h3>
+    <p>For anything that calls an LLM API, the only cap with no lag is one in the same process. This counts the cost of each response from its own usage numbers — Anthropic and OpenAI shapes, cached tokens included — and refuses the next call <em>before it is made</em> once you are at your cap. No dependencies. Tested: a runaway agent loop stops within one request of the cap.</p>
+    <div class="code-bar">
+      <button data-lang="ts" class="on">TypeScript</button><button data-lang="py">Python</button>
+      <span class="grow"></span>
+      <button id="copy">copy</button><a id="dl" href="breaker.ts" download>download</a>
+    </div>
+    <pre id="code" class="code"></pre>
+    <p class="note">Share one store between workers (a file, Redis, a KV) so they share one cap. Prices are yours to set: a wrong price is a wrong cap.</p>
+  </section>
+</main>
+
+<footer>
+  <p>Prompted by the October 2026 argument — <a href="https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/" target="_blank" rel="noopener">Simon Willison</a>, and <a href="https://news.ycombinator.com/item?id=49949235" target="_blank" rel="noopener">the thread</a> — that hard budget caps should be the default. Everyone agreed alerts arrive late; nobody put a number on how late, or what it costs.</p>
+  <p>Delays are modelled from each provider's own documentation, linked beside it. Where a document says “several hours” the page says what it assumed. Prices in the scenarios are examples: set your own. This is a model of the documented worst and typical cases, not a measurement of your account.</p>
+  <p>MIT. No tracking, no server: it all runs in this page.</p>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>

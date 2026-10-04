@@ -1,0 +1,9 @@
+{
+  "name": "overnight", "version": "0.1.0", "private": true,
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx src/model.test.ts && tsx src/breaker.test.ts && python3 src/breaker_test.py"
+  },
+  "devDependencies": { "@types/node": "^20", "esbuild": "^0.25.0", "tsx": "^4.23.13", "typescript": "^5" }
+}
