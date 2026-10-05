@@ -156,14 +156,19 @@ function drawNight(c: ReturnType<typeof compute>, reveal: number) {
 
 /* ── playing the night ────────────────────────────────────────────────────── */
 let playing = 0;
+let animating = false;
 function play() {
   if (!current) return;
   const token = ++playing, t0 = performance.now(), dur = 7000;
+  animating = true;
+  // The verdict belongs to the end of the night: clear it while the meter runs.
+  const v = $("#verdict") as HTMLElement;
+  v.replaceChildren(); delete v.dataset.level;
   const step = () => {
     if (token !== playing || !current) return;
     const f = Math.min(1, (performance.now() - t0) / dur);
     drawNight(current, 1 - Math.pow(1 - f, 2.2));
-    if (f < 1) setTimeout(step, 33); else finish();
+    if (f < 1) setTimeout(step, 33); else { animating = false; finish(); }
   };
   step();
 }
@@ -258,7 +263,7 @@ function render(animate: boolean) {
   current = compute();
   clearTimeout(debounce);
   if (animate) play();
-  else debounce = setTimeout(() => { playing++; finish(); }, 120);
+  else debounce = setTimeout(() => { playing++; animating = false; finish(); }, 120);
   const rate = state.scenario.rate(60 * 6, state.params) * 60;
   ($("#rate") as HTMLElement).textContent = `≈ ${money(rate)} an hour once it is going`;
 }
@@ -299,6 +304,7 @@ function boot() {
 }
 boot();
 let resized: ReturnType<typeof setTimeout> | undefined;
-window.addEventListener("resize", () => { clearTimeout(resized); resized = setTimeout(() => { if (current && playing) drawNight(current, 1); }, 150); });
+// Mid-replay the next frame redraws at the new size anyway; only a finished night needs a redraw.
+window.addEventListener("resize", () => { clearTimeout(resized); resized = setTimeout(() => { if (current && !animating) drawNight(current, 1); }, 150); });
 
 export { drawNight, compute, finish };
